@@ -35,6 +35,9 @@
 
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    #preco { scroll-margin-top: 24px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
     body {
       margin: 0;
@@ -160,6 +163,10 @@
     .pix-box .lead { font-size: 14.5px; }
     .pix-x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
     .pix-x:hover { color: var(--text); background: var(--surface-2); }
+    .pix-licenca {
+      display: inline-block; margin: 0 0 10px; padding: 3px 10px; border-radius: 99px;
+      border: 1px solid #2c5a45; background: #15231d; color: var(--accent-2); font-size: 12px; font-weight: 700;
+    }
     .pix-preco { color: var(--accent); font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 10px 0 14px; }
     .pix-campo {
       display: block; width: 100%; margin: 0 0 12px; padding: 13px 14px;
@@ -203,7 +210,7 @@
     </figure>
 
     <div class="cta">
-      <a class="btn" href="#checkout" data-comprar>Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
+      <a class="btn" href="#preco">Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
       <p class="secure">Programa para Windows · 6 meses de acesso · pagamento via Pix</p>
     </div>
 
@@ -307,7 +314,7 @@
         <details><summary>Tem algum custo além da chave?</summary><p>Só o crédito da IA: você coloca US$ 5 (o programa mostra o passo a passo). Cada reconhecimento gasta uma fração de centavo, então esse crédito rende muitas calls.</p></details>
       </div>
       <div class="cta">
-        <a class="btn" href="#checkout" data-comprar>Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
+        <a class="btn" href="#preco">Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
       </div>
     </section>
 
@@ -322,6 +329,7 @@
       <button class="pix-x" type="button" aria-label="Fechar" data-fechar>×</button>
 
       <form id="pixPasso1" novalidate>
+        <p class="pix-licenca">Licença de 6 meses</p>
         <h2 id="pixTitulo">Chave de acesso</h2>
         <p class="lead">CopilotoVendas.ai — Copiloto de Call de Vendas</p>
         <!-- O valor cobrado de verdade é o PRECO da função pix (..\Supabase\Funcoes\pix\index.ts) -->
