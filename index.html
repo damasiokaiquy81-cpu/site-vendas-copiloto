@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CopilotoVendas.ai — Seu melhor argumento, na hora certa</title>
+  <meta name="description" content="Um programa que escuta a sua call de vendas e, quando o cliente levanta uma objeção ou quer comprar, mostra na tela o argumento e o link que você mesmo preparou.">
+  <meta name="theme-color" content="#121214">
+  <link rel="icon" href="assets/favicon.png">
+  <style>
+    /* Mesma fonte e cores do app e do site de entrega (Inter embutida — licença em assets/OFL.txt) */
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/inter.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: dark;
+      --bg: #121214;
+      --surface: #19191c;
+      --surface-2: #212125;
+      --border: #2a2a2f;
+      --border-2: #3a3a41;
+      --text: #ededef;
+      --muted: #8d8d95;
+      --accent: #3ddc97;
+      --accent-2: #7eeec0;
+      --accent-ink: #06291b;
+      --gold: #f5c451;
+      --sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(900px 420px at 50% -120px, #16261f 0%, transparent 70%), var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15.5px;
+      line-height: 1.6;
+      letter-spacing: -0.006em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: 960px; margin: 0 auto; padding: 28px 16px 40px; }
+    .centro { text-align: center; }
+    section { margin-top: 64px; }
+
+    .top { display: flex; justify-content: center; }
+    .top div { display: inline-flex; align-items: center; gap: 10px; }
+    .logo { width: 40px; height: 40px; }
+    .brand { margin: 0; font-weight: 700; font-size: 14.5px; line-height: 1.25; }
+    .brand span { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+
+    h1 { font-size: clamp(34px, 7.4vw, 62px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.06; margin: 36px auto 0; max-width: 860px; }
+    h1 em, h2 em { font-style: normal; color: var(--accent); }
+    h2 { font-size: clamp(21px, 4.2vw, 30px); font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; margin: 0 0 10px; }
+    .lead { color: #b9b9c0; margin: 0 auto; max-width: 620px; font-size: 16.5px; }
+    .sub { color: var(--muted); margin: 0 auto; max-width: 600px; }
+
+    .cta { margin: 26px auto 0; max-width: 420px; text-align: center; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+      background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink);
+      border-radius: 12px; padding: 16px 18px; font-weight: 800; font-size: 16.5px;
+      text-decoration: none; cursor: pointer; transition: background .15s, transform .15s;
+    }
+    .btn:hover { background: var(--accent-2); border-color: var(--accent-2); }
+    .btn:active { transform: scale(.98); }
+    .icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .secure { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+    .secure .icon { width: 14px; height: 14px; color: var(--accent); }
+
+    /* Prints do programa */
+    .print { margin: 40px 0 0; }
+    .print img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--border-2); box-shadow: 0 30px 80px rgba(0, 0, 0, .55); }
+    .print figcaption { color: var(--muted); font-size: 12.5px; margin-top: 10px; text-align: center; }
+    .dois { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .dois .print { margin: 0; }
+    @media (max-width: 760px) { .dois { grid-template-columns: 1fr; } }
+
+    /* Notificações do Windows */
+    .avisos {
+      display: grid; grid-template-columns: 1fr 380px; gap: 36px; align-items: center;
+      padding: 32px; border-radius: 20px; background: linear-gradient(135deg, #16241e, var(--surface) 60%); border: 1px solid #2c5a45;
+    }
+    .avisos h2 { margin-top: 12px; }
+    .avisos .sub { margin: 0; max-width: none; }
+    .selo-novo { display: inline-block; padding: 4px 11px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; letter-spacing: .03em; }
+    .avisos-lista { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; }
+    .avisos-lista li { display: flex; gap: 10px; color: #c9c9cf; }
+    .avisos-lista .icon { color: var(--accent); margin-top: 3px; }
+    .avisos-lista b { color: var(--text); }
+    .toasts { display: grid; gap: 12px; }
+    .toast-win {
+      padding: 12px 14px 14px; border-radius: 10px; background: #2b2b2e; border: 1px solid #3c3c42;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .5); font-family: "Segoe UI", var(--sans); text-align: left;
+    }
+    .toast-win.sinal { border-color: #6b5a26; box-shadow: 0 18px 40px rgba(0, 0, 0, .5), 0 0 0 1px rgba(245, 196, 81, .15); transform: translateX(-14px); }
+    .toast-app { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #b9b9c0; margin-bottom: 8px; }
+    .toast-app img { width: 16px; height: 16px; }
+    .toast-app span { margin-left: auto; color: #85858c; }
+    .toast-win b { display: block; font-size: 14.5px; font-weight: 600; }
+    .toast-win.sinal b { color: var(--gold); }
+    .toast-win p { margin: 3px 0 0; font-size: 13.5px; color: #d2d2d7; line-height: 1.45; }
+    .toast-win .url { color: #85858c; font-size: 12.5px; }
+    @media (max-width: 800px) {
+      .avisos { grid-template-columns: 1fr; padding: 22px 18px; gap: 24px; }
+      .toast-win.sinal { transform: none; }
+    }
+
+    /* Para quem é */
+    .lista { list-style: none; margin: 18px auto 0; padding: 0; max-width: 620px; display: grid; gap: 10px; text-align: left; }
+    .lista li { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+    .lista .icon { color: var(--accent); margin-top: 3px; }
+
+    /* Como funciona */
+    .como { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
+    .passo { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+    .passo .n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #15231d; border: 1px solid #2c5a45; color: var(--accent); font-weight: 700; font-size: 13px; }
+    .passo h3 { margin: 12px 0 4px; font-size: 15.5px; }
+    .passo p { margin: 0; color: var(--muted); font-size: 14px; }
+    @media (max-width: 760px) { .como { grid-template-columns: 1fr; } }
+
+    /* O que vem */
+    .recebe { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 22px 0 0; padding: 0; list-style: none; }
+    .recebe li { display: flex; gap: 10px; }
+    .recebe .icon { color: var(--accent); margin-top: 3px; }
+    .recebe b { display: block; }
+    .recebe span { color: var(--muted); font-size: 14px; }
+    @media (max-width: 760px) { .recebe { grid-template-columns: 1fr; } }
+
+    /* Preço */
+    .preco { max-width: 440px; margin: 22px auto 0; padding: 28px 22px 24px; text-align: center; border-radius: 18px; background: linear-gradient(180deg, #16241e, var(--surface)); border: 1px solid #2c5a45; }
+    .preco .valor { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 2px; }
+    .preco .valor small { font-size: 16px; font-weight: 600; color: var(--muted); }
+    .preco p { margin: 0; color: var(--muted); font-size: 14px; }
+    .preco .cta { margin-top: 18px; }
+
+    .faq { max-width: 680px; margin: 22px auto 0; display: grid; gap: 8px; }
+    .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 16px; }
+    .faq summary { cursor: pointer; font-weight: 600; }
+    .faq p { margin: 8px 0 0; color: var(--muted); font-size: 14.5px; }
+
+    footer { color: var(--muted); font-size: 12px; margin-top: 60px; text-align: center; }
+    footer p { margin: 0 0 4px; }
+
+    /* Checkout Pix (janela por cima da página) */
+    .pix { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .72); overflow-y: auto; }
+    .pix-box {
+      position: relative; width: 100%; max-width: 400px; padding: 26px 20px 22px; text-align: center;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 30px 70px rgba(0, 0, 0, .6);
+    }
+    .pix-box h2 { margin: 0 0 4px; }
+    .pix-box .lead { font-size: 14.5px; }
+    .pix-x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+    .pix-x:hover { color: var(--text); background: var(--surface-2); }
+    .pix-preco { color: var(--accent); font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 10px 0 14px; }
+    .pix-campo {
+      display: block; width: 100%; margin: 0 0 12px; padding: 13px 14px;
+      background: var(--bg); border: 1px solid var(--border-2); border-radius: 10px; color: var(--text); font: inherit; font-size: 15.5px;
+    }
+    .pix-campo:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+    .pix .btn[disabled] { opacity: .6; cursor: wait; }
+    .pix-erro { color: #f08a7e; font-size: 13.5px; margin: 10px 0 0; }
+    .pix-qr { display: block; width: 220px; height: 220px; margin: 14px auto; padding: 10px; background: #fff; border-radius: 12px; }
+    .pix-codigo {
+      display: block; width: 100%; height: 68px; margin: 0 0 10px; padding: 9px 10px; resize: none;
+      background: var(--bg); border: 1px solid var(--border-2); border-radius: 10px; color: var(--muted); font: 12px/1.4 ui-monospace, Consolas, monospace; word-break: break-all;
+    }
+    .pix-espera { display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--muted); font-size: 13.5px; margin: 14px 0 0; }
+    .giro { width: 15px; height: 15px; flex: none; border-radius: 50%; border: 2px solid var(--border-2); border-top-color: var(--accent); animation: giro .8s linear infinite; }
+    @keyframes giro { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-seta" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+
+  <main class="page">
+    <div class="top">
+      <div>
+        <img class="logo" src="assets/logo.png" alt="">
+        <p class="brand">CopilotoVendas.ai <span>Copiloto de Call de Vendas</span></p>
+      </div>
+    </div>
+
+    <!-- Abertura: headline, print, botão -->
+    <div class="centro">
+      <h1>Seu melhor argumento, <em>na hora certa</em> da call.</h1>
+    </div>
+
+    <figure class="print">
+      <img src="assets/print-objecao.png" alt="Tela do Copiloto: o cliente disse que achou caro e aparece o card Quebrar objeção com o argumento do vendedor" width="1344" height="765">
+      <figcaption>O cliente disse “tá caro” e o seu argumento aparece na tela, na hora.</figcaption>
+    </figure>
+
+    <div class="cta">
+      <a class="btn" href="#checkout" data-comprar>Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
+      <p class="secure">Programa para Windows · 6 meses de acesso · pagamento via Pix</p>
+    </div>
+
+    <!-- Notificações do Windows -->
+    <section class="avisos">
+      <div class="avisos-txt">
+        <span class="selo-novo">Notificação no Windows</span>
+        <h2>Nem precisa ficar olhando: <em>ele te avisa na hora certa.</em></h2>
+        <p class="sub">No momento em que o cliente solta uma objeção ou pede para comprar, chega uma notificação no canto da sua tela
+          com a resposta. Você continua olhando para o cliente, e a ajuda aparece sozinha.</p>
+        <ul class="avisos-lista">
+          <li><svg class="icon"><use href="#i-check"/></svg><span><b>Aparece por cima de tudo</b>, até da janela da call.</span></li>
+          <li><svg class="icon"><use href="#i-check"/></svg><span><b>Um clique copia o link</b> de pagamento para colar no chat.</span></li>
+          <li><svg class="icon"><use href="#i-check"/></svg><span><b>Some sozinha</b> se você compartilhar a tela, para o cliente não ver.</span></li>
+        </ul>
+      </div>
+
+      <div class="toasts" aria-label="Ilustração das notificações do Windows">
+        <div class="toast-win sinal">
+          <div class="toast-app"><img src="assets/favicon.png" alt=""> CopilotoVendas.ai <span>agora</span></div>
+          <b>Hora de fechar: Quer comprar</b>
+          <p>👉 Clique para copiar: Link de pagamento<br><span class="url">https://mpago.la/seu-link</span></p>
+        </div>
+        <div class="toast-win">
+          <div class="toast-app"><img src="assets/favicon.png" alt=""> CopilotoVendas.ai <span>2 min</span></div>
+          <b>Quebrar objeção: Vou pensar</b>
+          <p>Claro. Normalmente quando alguém diz que vai pensar, ficou alguma dúvida. É sobre o valor, sobre funcionar no seu negócio…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Para quem é -->
+    <section class="centro">
+      <h2>Para quem vende por <em>call</em></h2>
+      <p class="sub">Se você já passou por alguma dessas, o Copiloto foi feito para você:</p>
+      <ul class="lista">
+        <li><svg class="icon"><use href="#i-check"/></svg><span>O cliente disse “vou pensar” e você só lembrou da resposta certa depois que a call acabou.</span></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><span>Você tem bons argumentos, mas no calor da conversa eles somem da cabeça.</span></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><span>O cliente disse “pode mandar o link” e você perdeu tempo procurando o link de pagamento.</span></li>
+      </ul>
+    </section>
+
+    <!-- Como funciona -->
+    <section class="centro">
+      <h2>Como funciona</h2>
+      <div class="como" style="text-align:left">
+        <div class="passo"><span class="n">1</span><h3>Você prepara as respostas</h3><p>Cadastra as objeções que mais ouve (“tá caro”, “vou pensar”…) e os sinais de compra, com o seu argumento e os seus links.</p></div>
+        <div class="passo"><span class="n">2</span><h3>Ele escuta a call</h3><p>Transcreve você e o cliente em tempo real no Google Meet, Zoom, Teams ou WhatsApp. Nenhum robô entra na reunião.</p></div>
+        <div class="passo"><span class="n">3</span><h3>Você é avisado na hora</h3><p>Quando o cliente fala algo parecido, chega uma notificação do Windows e o card com o seu argumento aparece na tela.</p></div>
+      </div>
+
+      <div class="dois">
+        <figure class="print">
+          <img src="assets/print-sinal.png" alt="Card Hora de fechar com os botões para copiar o link de pagamento e a proposta" width="1344" height="765" loading="lazy">
+          <figcaption>Cliente pediu o link: aparece “Hora de fechar” com o botão para copiar o link de pagamento e colar no chat.</figcaption>
+        </figure>
+        <figure class="print">
+          <img src="assets/print-objecoes.png" alt="Aba Objeções com a lista de objeções e argumentos cadastrados" width="1344" height="765" loading="lazy">
+          <figcaption>Você escreve e edita as respostas. Já vem com exemplos para começar.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- O que vem -->
+    <section>
+      <h2 class="centro">O que você recebe</h2>
+      <ul class="recebe">
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>O programa para Windows</b><span>Chave de acesso para um computador, válida por 6 meses.</span></div></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>7 objeções e 4 sinais de compra de exemplo</b><span>Prontos para você adaptar ao seu produto.</span></div></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>Links no card</b><span>Pagamento, proposta, case: um clique para copiar e mandar no chat.</span></div></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>Notificação no Windows</b><span>Não precisa deixar o Copiloto aberto na frente da call.</span></div></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>Pausa automática</b><span>Se você compartilhar a tela, ele some e não mostra nada ao cliente.</span></div></li>
+        <li><svg class="icon"><use href="#i-check"/></svg><div><b>Funciona com Meet, Zoom, Teams e WhatsApp</b><span>Pelo navegador ou pelos programas instalados.</span></div></li>
+      </ul>
+    </section>
+
+    <!-- Preço -->
+    <section class="centro" id="preco">
+      <h2>Quanto custa</h2>
+      <div class="preco">
+        <p>Chave de acesso ao CopilotoVendas.ai</p>
+        <div class="valor">R$ 97 <small>à vista no Pix</small></div>
+        <p><b style="color:var(--text)">6 meses de acesso</b> · pagamento único, sem mensalidade.</p>
+        <div class="cta">
+          <a class="btn" href="#checkout" data-comprar>Comprar agora <svg class="icon"><use href="#i-seta"/></svg></a>
+        </div>
+        <p style="margin-top:12px;font-size:13px">Você tem 7 dias para desistir e receber o dinheiro de volta (Código de Defesa do Consumidor).</p>
+      </div>
+    </section>
+
+    <!-- Perguntas -->
+    <section>
+      <h2 class="centro">Perguntas frequentes</h2>
+      <div class="faq">
+        <details><summary>Como recebo depois de pagar?</summary><p>Depois da confirmação do Pix, você fala com a gente pelo WhatsApp (o botão aparece na tela) e recebe a chave de acesso e o link para baixar o programa.</p></details>
+        <details><summary>O cliente percebe?</summary><p>Nenhum robô entra na reunião: o Copiloto só escuta o áudio da call no seu computador. Mesmo assim, recomendamos avisar que a conversa está sendo transcrita.</p></details>
+        <details><summary>Eu escrevo os argumentos?</summary><p>Sim. Já vem com exemplos, e você edita, apaga ou cria os seus, com até 3 links cada. A IA só reconhece o momento; o texto e os links são seus.</p></details>
+        <details><summary>E se eu compartilhar a tela na call?</summary><p>O Copiloto detecta e entra em pausa sozinho: some da tela, não envia nada e volta quando você para de compartilhar. Dá para desligar isso nas configurações.</p></details>
+        <details><summary>Por quanto tempo vale?</summary><p>A chave vale 6 meses a partir da compra. Perto do fim, você pode renovar para continuar usando.</p></details>
+        <details><summary>Funciona no Mac ou no celular?</summary><p>Não. Por enquanto é só para computador com Windows e Google Chrome.</p></details>
+        <details><summary>Tem algum custo além da chave?</summary><p>Só o crédito da IA: você coloca US$ 5 (o programa mostra o passo a passo). Cada reconhecimento gasta uma fração de centavo, então esse crédito rende muitas calls.</p></details>
+      </div>
+      <div class="cta">
+        <a class="btn" href="#checkout" data-comprar>Quero o Copiloto <svg class="icon"><use href="#i-seta"/></svg></a>
+      </div>
+    </section>
+
+    <footer>
+      <p>Programa para computador com Windows + Google Chrome.</p>
+      <p>© 2026 CopilotoVendas.ai</p>
+    </footer>
+  </main>
+
+  <div class="pix" id="pix" role="dialog" aria-modal="true" aria-labelledby="pixTitulo" hidden>
+    <div class="pix-box">
+      <button class="pix-x" type="button" aria-label="Fechar" data-fechar>×</button>
+
+      <form id="pixPasso1" novalidate>
+        <h2 id="pixTitulo">Chave de acesso</h2>
+        <p class="lead">CopilotoVendas.ai — Copiloto de Call de Vendas</p>
+        <!-- O valor cobrado de verdade é o PRECO da função pix (..\Supabase\Funcoes\pix\index.ts) -->
+        <p class="pix-preco">R$ 97,00</p>
+        <input class="pix-campo" id="pixNome" type="text" autocomplete="name" placeholder="Seu nome" aria-label="Seu nome" required>
+        <input class="pix-campo" id="pixEmail" type="email" inputmode="email" autocomplete="email" placeholder="Seu melhor e-mail" aria-label="Seu e-mail" required>
+        <input class="pix-campo" id="pixTel" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Seu WhatsApp com DDD" aria-label="Seu WhatsApp com DDD" required>
+        <button class="btn" type="submit" id="pixGerar">GERAR PIX</button>
+        <p class="pix-erro" id="pixErro" role="alert" hidden></p>
+        <p class="secure">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Pagamento processado pelo Mercado Pago
+        </p>
+      </form>
+
+      <div id="pixPasso2" hidden>
+        <h2>Pague com Pix</h2>
+        <p class="lead">Abra o app do seu banco e escaneie o QR Code, ou use o Pix Copia e Cola.</p>
+        <img class="pix-qr" id="pixQr" alt="QR Code do Pix">
+        <textarea class="pix-codigo" id="pixCodigo" readonly aria-label="Código Pix Copia e Cola"></textarea>
+        <button class="btn" type="button" id="pixCopiar">COPIAR CÓDIGO PIX</button>
+        <p class="pix-espera"><span class="giro"></span> Aguardando o pagamento… a tela muda sozinha.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Botões de compra → Pix do Mercado Pago, pela função "pix" do Supabase
+       (..\Supabase\Funcoes\pix). Quando o pagamento é aprovado, vai para obrigado.html. */
+    (function () {
+      var API = 'https://ilqfapwlmgxgkwcgrdgi.supabase.co/functions/v1/pix';
+
+      // Código da pressel: chega no link (?d=...) e fica guardado para as próximas visitas
+      var dispositivo = new URLSearchParams(location.search).get('d') || '';
+      try {
+        if (dispositivo) localStorage.setItem('copi_disp', dispositivo);
+        else dispositivo = localStorage.getItem('copi_disp') || '';
+      } catch (e) {}
+
+      var janela = document.getElementById('pix');
+      var passo1 = document.getElementById('pixPasso1');
+      var passo2 = document.getElementById('pixPasso2');
+      var nome = document.getElementById('pixNome');
+      var email = document.getElementById('pixEmail');
+      var tel = document.getElementById('pixTel');
+      var gerar = document.getElementById('pixGerar');
+      var erro = document.getElementById('pixErro');
+      var qr = document.getElementById('pixQr');
+      var codigo = document.getElementById('pixCodigo');
+      var copiar = document.getElementById('pixCopiar');
+      var pedido = null;   // Pix já gerado nesta visita: reabrir a janela mostra o mesmo
+      var espera = null;
+
+      function abrir(e) {
+        e.preventDefault();
+        janela.hidden = false;
+        document.body.style.overflow = 'hidden';
+        if (pedido) acompanhar(); else nome.focus();
+      }
+
+      function fechar() {
+        janela.hidden = true;
+        document.body.style.overflow = '';
+        clearTimeout(espera);
+      }
+
+      function mostrarErro(msg) {
+        erro.textContent = msg;
+        erro.hidden = false;
+      }
+
+      function acompanhar() {
+        clearTimeout(espera);
+        espera = setTimeout(function () {
+          fetch(API + '?id=' + pedido.id)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d.pago) { location.href = 'obrigado.html?id=' + pedido.id; return; }
+              if (d.status === 'cancelled' || d.status === 'rejected') {
+                pedido = null;
+                passo2.hidden = true;
+                passo1.hidden = false;
+                mostrarErro('Esse Pix expirou. Gere um novo para continuar.');
+                return;
+              }
+              if (!janela.hidden) acompanhar();
+            })
+            .catch(function () { if (!janela.hidden) acompanhar(); });
+        }, 4000);
+      }
+
+      passo1.addEventListener('submit', function (e) {
+        e.preventDefault();
+        erro.hidden = true;
+        var digitos = tel.value.replace(/\D/g, '');
+        if (nome.value.trim().length < 2) { mostrarErro('Digite o seu nome.'); nome.focus(); return; }
+        if (!email.checkValidity() || !email.value.trim()) { mostrarErro('Digite um e-mail válido.'); email.focus(); return; }
+        if (digitos.length < 10 || digitos.length > 13) { mostrarErro('Digite o seu WhatsApp com DDD.'); tel.focus(); return; }
+
+        gerar.disabled = true;
+        gerar.textContent = 'GERANDO PIX…';
+        fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: nome.value.trim(), email: email.value.trim(), telefone: digitos, dispositivo: dispositivo })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d.id) throw new Error(d.erro);
+            pedido = d;
+            qr.src = 'data:image/png;base64,' + d.qrcode;
+            codigo.value = d.copiaecola;
+            passo1.hidden = true;
+            passo2.hidden = false;
+            acompanhar();
+          })
+          .catch(function (err) {
+            mostrarErro((err && err.message) || 'Não foi possível gerar o Pix. Tente de novo.');
+          })
+          .then(function () {
+            gerar.disabled = false;
+            gerar.textContent = 'GERAR PIX';
+          });
+      });
+
+      copiar.addEventListener('click', function () {
+        function ok() {
+          copiar.textContent = 'CÓDIGO COPIADO ✓';
+          setTimeout(function () { copiar.textContent = 'COPIAR CÓDIGO PIX'; }, 2500);
+        }
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(codigo.value).then(ok, function () { codigo.select(); document.execCommand('copy'); ok(); });
+        } else {
+          codigo.select();
+          document.execCommand('copy');
+          ok();
+        }
+      });
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-comprar]'), function (a) {
+        a.addEventListener('click', abrir);
+      });
+      janela.querySelector('[data-fechar]').addEventListener('click', fechar);
+      janela.addEventListener('click', function (e) { if (e.target === janela) fechar(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !janela.hidden) fechar(); });
+    })();
+  </script>
+</body>
+</html>
